@@ -61,7 +61,7 @@ import com.fongmi.android.tv.ui.adapter.FlagAdapter;
 import com.fongmi.android.tv.ui.adapter.PartAdapter;
 import com.fongmi.android.tv.ui.adapter.QualityAdapter;
 import com.fongmi.android.tv.ui.adapter.QuickAdapter;
-import com.fongmi.android.tv.ui.custom.CustomKeyDownVod;
+import com.fongmi.android.tv.ui.custom.CustomKeyDownTv;
 import com.fongmi.android.tv.ui.custom.CustomMovement;
 import com.fongmi.android.tv.ui.dialog.ChapterDialog;
 import com.fongmi.android.tv.ui.dialog.ContentDialog;
@@ -99,7 +99,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, CustomKeyDownVod.Listener, TrackDialog.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
+public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, CustomKeyDownTv.Listener, TrackDialog.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
 
     private ActivityVideoBinding mBinding;
     private ViewGroup.LayoutParams mFrameParams;
@@ -113,7 +113,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private FlagAdapter mFlagAdapter;
     private PartAdapter mPartAdapter;
     private VodPlaybackController mVod;
-    private CustomKeyDownVod mKeyDown;
+    private CustomKeyDownTv mKeyDown;
     private VideoViewModel mViewModel;
     private History mHistory;
     private boolean fullscreen;
@@ -268,7 +268,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         super.initView(savedInstanceState);
         mFrameParams = mBinding.video.getLayoutParams();
         mClock = Clock.create(mBinding.widget.clock);
-        mKeyDown = CustomKeyDownVod.create(this);
+        mKeyDown = CustomKeyDownTv.create(this, mBinding.player);
         mObserveDetail = this::onDetailObserved;
         mObservePlayer = this::onPlayerObserved;
         mObserveSearch = this::onSearchObserved;
@@ -1391,6 +1391,44 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     @Override
     public void onDoubleTap() {
         if (isFullscreen()) onKeyCenter();
+    }
+
+    @Override
+    public void onBright(int progress) {
+        mBinding.widget.bright.setVisibility(View.VISIBLE);
+        mBinding.widget.brightProgress.setProgress(progress);
+        if (progress < 35) mBinding.widget.brightIcon.setImageResource(R.drawable.ic_widget_bright_low);
+        else if (progress < 70) mBinding.widget.brightIcon.setImageResource(R.drawable.ic_widget_bright_medium);
+        else mBinding.widget.brightIcon.setImageResource(R.drawable.ic_widget_bright_high);
+    }
+
+    @Override
+    public void onVolume(int progress) {
+        mBinding.widget.volume.setVisibility(View.VISIBLE);
+        mBinding.widget.volumeProgress.setProgress(progress);
+        if (progress < 35) mBinding.widget.volumeIcon.setImageResource(R.drawable.ic_widget_volume_low);
+        else if (progress < 70) mBinding.widget.volumeIcon.setImageResource(R.drawable.ic_widget_volume_medium);
+        else mBinding.widget.volumeIcon.setImageResource(R.drawable.ic_widget_volume_high);
+    }
+
+    @Override
+    public void onFlingUp() {
+        if (mEpisodeAdapter.getItemCount() <= 1) onRefresh();
+        else mVod.nextEpisode(true);
+    }
+
+    @Override
+    public void onFlingDown() {
+        if (mEpisodeAdapter.getItemCount() <= 1) onRefresh();
+        else mVod.prevEpisode(true);
+    }
+
+    @Override
+    public void onTouchEnd() {
+        mBinding.widget.seek.setVisibility(View.GONE);
+        mBinding.widget.speed.setVisibility(View.GONE);
+        mBinding.widget.bright.setVisibility(View.GONE);
+        mBinding.widget.volume.setVisibility(View.GONE);
     }
 
     @Override
