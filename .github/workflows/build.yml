@@ -1,0 +1,48 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ fongmi ]
+  pull_request:
+    branches: [ fongmi ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: zulu
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "storeFile=debug.keystore" >> local.properties
+          echo "keyAlias=androiddebugkey" >> local.properties
+          echo 'storePassword=android' >> local.properties
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build leanback APK (debug, all ABIs)
+        run: ./gradlew assembleLeanbackDebug
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OKTV-leanback-debug
+          path: |
+            app/build/outputs/apk/**/debug/*.apk
+          if-no-files-found: error
