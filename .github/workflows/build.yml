@@ -3,8 +3,6 @@ name: Build APK
 on:
   push:
     branches: [ fongmi ]
-  pull_request:
-    branches: [ fongmi ]
   workflow_dispatch:
 
 jobs:
@@ -26,18 +24,21 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create local.properties
+      - name: Create local.properties (debug signing)
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "storeFile=debug.keystore" >> local.properties
           echo "keyAlias=androiddebugkey" >> local.properties
-          echo 'storePassword=android' >> local.properties
+          echo "storePassword=android" >> local.properties
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Build leanback APK (debug, all ABIs)
-        run: ./gradlew assembleLeanbackDebug
+      - name: Build leanback arm64_v8a debug APK
+        run: ./gradlew assembleLeanbackArm64_v8aDebug
+
+      - name: Build leanback armeabi_v7a debug APK
+        run: ./gradlew assembleLeanbackArmeabi_v7aDebug
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
